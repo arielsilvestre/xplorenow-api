@@ -1,0 +1,18 @@
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
+
+const Activity = sequelize.define('Activity', {
+  id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  name: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT },
+  price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+  capacity: { type: DataTypes.INTEGER, allowNull: false },
+  imageUrl: { type: DataTypes.STRING },
+  category: {
+    type: DataTypes.ENUM('tour', 'free_tour', 'excursion', 'experience'),
+    defaultValue: 'tour',
+  },
+  // destinationId y guideId se agregan via asociaciones en models/index.js
+});
+
+module.exports = Activity;
