@@ -5,7 +5,11 @@ const Activity = sequelize.define('Activity', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   name: { type: DataTypes.STRING, allowNull: false },
   description: { type: DataTypes.TEXT },
-  price: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    get() { return parseFloat(this.getDataValue('price')); },
+  },
   capacity: { type: DataTypes.INTEGER, allowNull: false },
   imageUrl: { type: DataTypes.STRING },
   category: {
