@@ -1,4 +1,8 @@
 require('dotenv').config();
+// When running locally via `railway run`, use the public URL (internal URL is unreachable outside Railway)
+if (process.env.DATABASE_PUBLIC_URL) {
+  process.env.DATABASE_URL = process.env.DATABASE_PUBLIC_URL;
+}
 const { sequelize } = require('../config/database');
 const { Activity, Destination } = require('../models');
 
