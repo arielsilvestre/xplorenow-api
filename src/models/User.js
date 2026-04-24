@@ -21,6 +21,9 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  phone: { type: DataTypes.STRING },
+  photoUrl: { type: DataTypes.STRING },
+  preferences: { type: DataTypes.ARRAY(DataTypes.STRING), defaultValue: [] },
   role: {
     type: DataTypes.ENUM('user', 'admin'),
     defaultValue: 'user',
