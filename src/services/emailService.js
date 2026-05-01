@@ -1,10 +1,11 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
+const getClient = () => new Resend(process.env.RESEND_API_KEY);
+
 const sendVerificationEmail = async (toEmail, code) => {
-  await resend.emails.send({
+  await getClient().emails.send({
     from: FROM,
     to: toEmail,
     subject: 'Verificá tu cuenta en XploreNow',
@@ -20,7 +21,7 @@ const sendVerificationEmail = async (toEmail, code) => {
 };
 
 const sendPasswordResetEmail = async (toEmail, code) => {
-  await resend.emails.send({
+  await getClient().emails.send({
     from: FROM,
     to: toEmail,
     subject: 'Recuperá tu contraseña — XploreNow',
