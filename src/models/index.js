@@ -1,4 +1,5 @@
 const User = require('./User');
+const OtpCode = require('./OtpCode');
 const Destination = require('./Destination');
 const TourGuide = require('./TourGuide');
 const Activity = require('./Activity');
@@ -33,4 +34,4 @@ User.hasMany(Review, { foreignKey: 'userId', as: 'reviews' });
 Review.belongsTo(Activity, { foreignKey: 'activityId', as: 'activity' });
 Activity.hasMany(Review, { foreignKey: 'activityId', as: 'reviews' });
 
-module.exports = { User, Destination, TourGuide, Activity, Availability, Reservation, Favorite, Review };
+module.exports = { User, OtpCode, Destination, TourGuide, Activity, Availability, Reservation, Favorite, Review };
