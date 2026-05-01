@@ -11,7 +11,7 @@ const Activity = sequelize.define('Activity', {
     get() { return parseFloat(this.getDataValue('price')); },
   },
   capacity: { type: DataTypes.INTEGER, allowNull: false },
-  imageUrl: { type: DataTypes.STRING },
+  imageUrl: { type: DataTypes.TEXT },
   category: {
     type: DataTypes.ENUM('tour', 'free_tour', 'excursion', 'experience'),
     defaultValue: 'tour',
