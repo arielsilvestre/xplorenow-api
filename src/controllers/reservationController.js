@@ -54,6 +54,12 @@ const create = async (req, res) => {
     if (!activity) {
       return res.status(404).json({ success: false, message: 'Actividad no encontrada' });
     }
+    const reserved = await Reservation.sum('people', {
+      where: { activityId, status: { [Op.in]: ['pending', 'confirmed'] } },
+    }) || 0;
+    if (reserved + people > activity.capacity) {
+      return res.status(400).json({ success: false, message: 'No hay suficientes cupos disponibles' });
+    }
     const reservation = await Reservation.create({
       activityId, userId: req.user.id, date, people, status: 'pending',
     });
