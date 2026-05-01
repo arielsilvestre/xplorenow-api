@@ -11,7 +11,7 @@ const activityInclude = {
 const getMyReservations = async (req, res) => {
   try {
     const reservations = await Reservation.findAll({
-      where: { userId: req.user.id },
+      where: { userId: req.user.id, status: { [Op.in]: ['pending', 'confirmed'] } },
       include: [activityInclude],
       order: [['date', 'DESC']],
     });
@@ -25,12 +25,15 @@ const getMyReservations = async (req, res) => {
 const getHistory = async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
-    const dateWhere = { [Op.lt]: today };
-    if (req.query.from) dateWhere[Op.gte] = req.query.from;
-    if (req.query.to) dateWhere[Op.lte] = req.query.to;
 
     const reservations = await Reservation.findAll({
-      where: { userId: req.user.id, status: 'confirmed', date: dateWhere },
+      where: {
+        userId: req.user.id,
+        [Op.or]: [
+          { status: 'cancelled' },
+          { status: 'confirmed', date: { [Op.lt]: today } },
+        ],
+      },
       include: [activityInclude],
       order: [['date', 'DESC']],
     });
