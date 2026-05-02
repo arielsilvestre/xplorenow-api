@@ -21,6 +21,7 @@ const Activity = sequelize.define('Activity', {
   meetingPoint: { type: DataTypes.STRING },
   departureLat: { type: DataTypes.FLOAT, allowNull: true },
   departureLng: { type: DataTypes.FLOAT, allowNull: true },
+  photos: { type: DataTypes.ARRAY(DataTypes.TEXT), defaultValue: [] },
   whatsIncluded: { type: DataTypes.TEXT },
   cancellationPolicy: { type: DataTypes.TEXT },
   // destinationId y guideId se agregan via asociaciones en models/index.js
