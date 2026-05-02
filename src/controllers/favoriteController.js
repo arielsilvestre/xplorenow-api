@@ -1,4 +1,4 @@
-const { Favorite, Activity, Destination } = require('../models');
+const { Favorite, FavoriteDestination, Activity, Destination } = require('../models');
 
 const activityInclude = {
   model: Activity,
@@ -7,14 +7,33 @@ const activityInclude = {
   include: [{ model: Destination, as: 'destination', attributes: ['id', 'name'] }],
 };
 
+const destinationInclude = {
+  model: Destination,
+  as: 'destination',
+  attributes: ['id', 'name', 'description', 'imageUrl', 'latitude', 'longitude'],
+};
+
 const getMyFavorites = async (req, res) => {
   try {
-    const favorites = await Favorite.findAll({
-      where: { userId: req.user.id },
-      include: [activityInclude],
-      order: [['createdAt', 'DESC']],
+    const [favAct, favDest] = await Promise.all([
+      Favorite.findAll({
+        where: { userId: req.user.id },
+        include: [activityInclude],
+        order: [['createdAt', 'DESC']],
+      }),
+      FavoriteDestination.findAll({
+        where: { userId: req.user.id },
+        include: [destinationInclude],
+        order: [['createdAt', 'DESC']],
+      }),
+    ]);
+    res.json({
+      success: true,
+      data: {
+        activities: favAct.map(f => f.activity),
+        destinations: favDest.map(f => f.destination),
+      },
     });
-    res.json({ success: true, data: favorites });
   } catch (error) {
     console.error('Error fetching favorites:', error);
     res.status(500).json({ success: false, message: 'Error al obtener favoritos' });
@@ -23,7 +42,10 @@ const getMyFavorites = async (req, res) => {
 
 const toggle = async (req, res) => {
   try {
-    const { activityId } = req.params;
+    const { activityId } = req.body;
+    if (!activityId) {
+      return res.status(400).json({ success: false, message: 'activityId requerido' });
+    }
     const existing = await Favorite.findOne({
       where: { userId: req.user.id, activityId },
     });
@@ -39,4 +61,25 @@ const toggle = async (req, res) => {
   }
 };
 
-module.exports = { getMyFavorites, toggle };
+const toggleDestination = async (req, res) => {
+  try {
+    const { destinationId } = req.body;
+    if (!destinationId) {
+      return res.status(400).json({ success: false, message: 'destinationId requerido' });
+    }
+    const existing = await FavoriteDestination.findOne({
+      where: { userId: req.user.id, destinationId },
+    });
+    if (existing) {
+      await existing.destroy();
+      return res.json({ success: true, isFavorite: false });
+    }
+    await FavoriteDestination.create({ userId: req.user.id, destinationId });
+    res.status(201).json({ success: true, isFavorite: true });
+  } catch (error) {
+    console.error('Error toggling destination favorite:', error);
+    res.status(500).json({ success: false, message: 'Error al actualizar favorito de destino' });
+  }
+};
+
+module.exports = { getMyFavorites, toggle, toggleDestination };

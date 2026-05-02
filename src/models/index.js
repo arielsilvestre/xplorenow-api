@@ -6,6 +6,7 @@ const Activity = require('./Activity');
 const Availability = require('./Availability');
 const Reservation = require('./Reservation');
 const Favorite = require('./Favorite');
+const FavoriteDestination = require('./FavoriteDestination');
 const Review = require('./Review');
 
 // Asociaciones
@@ -34,4 +35,9 @@ User.hasMany(Review, { foreignKey: 'userId', as: 'reviews' });
 Review.belongsTo(Activity, { foreignKey: 'activityId', as: 'activity' });
 Activity.hasMany(Review, { foreignKey: 'activityId', as: 'reviews' });
 
-module.exports = { User, OtpCode, Destination, TourGuide, Activity, Availability, Reservation, Favorite, Review };
+FavoriteDestination.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(FavoriteDestination, { foreignKey: 'userId', as: 'favoriteDestinations' });
+FavoriteDestination.belongsTo(Destination, { foreignKey: 'destinationId', as: 'destination' });
+Destination.hasMany(FavoriteDestination, { foreignKey: 'destinationId', as: 'favoriteDestinations' });
+
+module.exports = { User, OtpCode, Destination, TourGuide, Activity, Availability, Reservation, Favorite, FavoriteDestination, Review };
