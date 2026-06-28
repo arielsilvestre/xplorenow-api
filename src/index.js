@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const { sequelize } = require('./config/database');
 const routes = require('./routes');
+const v0Routes = require('./routes/v0');
 const errorHandler = require('./middlewares/errorHandler');
 const { generalLimiter } = require('./middlewares/rateLimiter');
 
@@ -21,6 +22,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Compatibility layer for Android-Grupo-3 (flat responses, no /v1 prefix)
+app.use('/api', v0Routes);
+// Original API (wrapped responses, UUID-based before migration)
 app.use('/api/v1', routes);
 app.use(errorHandler);
 
