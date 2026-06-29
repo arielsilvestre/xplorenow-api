@@ -47,9 +47,9 @@ const toDto = async (reservation, userId) => {
     : (activity.price || 0) * (plain.people || 1);
 
   return {
-    idReserve: plain.id,
-    creationDate: plain.createdAt,
-    numberOfPeople: plain.people,
+    id_reserve: plain.id,
+    creation_date: plain.createdAt,
+    number_of_people: plain.people,
     totalPrice,
     state: plain.status,
     travellerName: plain.user ? plain.user.name : null,

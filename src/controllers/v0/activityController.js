@@ -1,6 +1,15 @@
 const { Op, literal, fn, col } = require('sequelize');
 const { Activity, Destination, TourGuide, Availability, Review, Image, Reservation } = require('../../models');
 
+// Convierte strings como '3 horas', '2.5 horas' a minutos enteros.
+// parseFloat('3 horas') → 3.0 en JS (extrae el número inicial del string).
+const parseDurationMinutes = (dur) => {
+  if (!dur) return null;
+  if (typeof dur === 'number') return dur;
+  const hours = parseFloat(dur);
+  return isNaN(hours) ? null : Math.round(hours * 60);
+};
+
 const ratingLiteral = literal(`(
   SELECT COALESCE(AVG(r.stars), 0)
   FROM "Reviews" r
@@ -29,7 +38,7 @@ const toDto = (activity) => {
     description: plain.description,
     price: plain.price,
     rating: plain.rating ? parseFloat(plain.rating) : 0,
-    duration: plain.duration,
+    duration: parseDurationMinutes(plain.duration),
     category: plain.category,
     inclusions: plain.whatsIncluded,
     meetingPoint: plain.meetingPoint,
