@@ -17,9 +17,9 @@ const toDto = async (reservation, userId) => {
   const activity = plain.activity || {};
   const dest = activity.destination || {};
   const guide = activity.guide || {};
-  const images = (activity.images || []).map(img => ({ id: img.id, url: img.url }));
+  const images = (activity.images || []).map(img => ({ id_image: img.id, url: img.url }));
   if (images.length === 0 && activity.imageUrl) {
-    images.push({ id: null, url: activity.imageUrl });
+    images.push({ id_image: null, url: activity.imageUrl });
   }
 
   // Verificar si puede calificar (reserva pasada y confirmada)
@@ -93,11 +93,13 @@ const getHistory = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const { disponibility, numberOfPeople } = req.body;
-    const disponibilityId = disponibility?.idDisponibility ?? req.body.disponibilityId;
+    const { disponibility } = req.body;
+    // Android envía number_of_people (snake_case via @SerializedName); aceptar ambas formas
+    const people = req.body.number_of_people ?? req.body.numberOfPeople ?? req.body.people ?? 1;
+    // Android envía disponibility.id_disponibility (snake_case via @SerializedName); aceptar ambas formas
+    const disponibilityId = disponibility?.id_disponibility ?? disponibility?.idDisponibility ?? req.body.disponibilityId;
     const activityId = req.body.activityId ?? disponibility?.activityId;
     const date = req.body.reservationDate ?? req.body.date;
-    const people = numberOfPeople ?? req.body.people ?? 1;
 
     if (!activityId || !date) {
       return res.status(400).json({ message: 'activityId y date son requeridos' });

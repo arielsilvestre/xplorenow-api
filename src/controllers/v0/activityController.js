@@ -25,11 +25,11 @@ const reservationCountLiteral = literal(`(
 
 const toDto = (activity) => {
   const plain = activity.toJSON ? activity.toJSON() : activity;
-  const images = (plain.images || []).map(img => ({ id: img.id, url: img.url }));
+  const images = (plain.images || []).map(img => ({ id_image: img.id, url: img.url }));
   // fallback: si no hay imágenes en tabla Image, usar imageUrl + photos
   if (images.length === 0 && plain.imageUrl) {
-    images.push({ id: null, url: plain.imageUrl });
-    (plain.photos || []).forEach((url, i) => images.push({ id: null, url }));
+    images.push({ id_image: null, url: plain.imageUrl });
+    (plain.photos || []).forEach((url) => images.push({ id_image: null, url }));
   }
 
   return {
@@ -87,10 +87,9 @@ const getAll = async (req, res) => {
     const { page = 0, size = 20, sort } = req.query;
     const limit = parseInt(size);
     const offset = parseInt(page) * limit;
-
     const order = sort === 'price' ? [['price', 'ASC']] : [['createdAt', 'DESC']];
 
-    const activities = await Activity.findAll({
+    const { count, rows } = await Activity.findAndCountAll({
       where: buildWhere(req.query),
       attributes: { include: [[ratingLiteral, 'rating']] },
       include: baseIncludes,
@@ -98,7 +97,13 @@ const getAll = async (req, res) => {
       limit,
       offset,
     });
-    res.json(activities.map(toDto));
+    res.json({
+      content: rows.map(toDto),
+      totalElements: count,
+      totalPages: Math.ceil(count / limit),
+      number: parseInt(page),
+      size: limit,
+    });
   } catch (err) {
     console.error('Error fetching activities:', err);
     res.status(500).json({ message: 'Error al obtener actividades' });
@@ -154,7 +159,7 @@ const search = async (req, res) => {
     const limit = parseInt(size);
     const offset = parseInt(page) * limit;
 
-    const activities = await Activity.findAll({
+    const { count, rows } = await Activity.findAndCountAll({
       where: {
         [Op.or]: [
           { name: { [Op.iLike]: `%${keyword}%` } },
@@ -166,7 +171,13 @@ const search = async (req, res) => {
       limit,
       offset,
     });
-    res.json(activities.map(toDto));
+    res.json({
+      content: rows.map(toDto),
+      totalElements: count,
+      totalPages: Math.ceil(count / limit),
+      number: parseInt(page),
+      size: limit,
+    });
   } catch (err) {
     console.error('Error searching activities:', err);
     res.status(500).json({ message: 'Error en búsqueda' });
