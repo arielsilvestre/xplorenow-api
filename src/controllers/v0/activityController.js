@@ -54,7 +54,7 @@ const toDto = (activity) => {
       hour: a.hour,
       precio: a.precio,
       total_quota: a.totalQuota ?? a.spotsLeft,
-      disponibleQuota: a.spotsLeft,
+      disponible_quota: a.spotsLeft,
       activityId: a.activityId,
       guideId: a.guideId ?? null,
       date: a.date,

@@ -3,7 +3,7 @@ const { Review, Activity, User } = require('../../models');
 const toDto = (review) => {
   const plain = review.toJSON ? review.toJSON() : review;
   return {
-    id: plain.id,
+    id_review: plain.id,
     rating: plain.stars,
     guideRating: plain.guideRating ?? null,
     comment: plain.comment,

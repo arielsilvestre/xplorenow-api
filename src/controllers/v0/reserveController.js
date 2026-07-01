@@ -22,9 +22,15 @@ const toDto = async (reservation, userId) => {
     images.push({ id_image: null, url: activity.imageUrl });
   }
 
-  // Verificar si puede calificar (reserva pasada y confirmada)
+  // Derivar estado en uppercase para Android (que compara con "PENDING","CONFIRMED","CANCELLED","COMPLETED")
+  // COMPLETED = confirmed + fecha pasada (no existe en DB, se deriva)
   const today = new Date().toISOString().split('T')[0];
-  const canRate = plain.status === 'confirmed' && plain.date < today;
+  const derivedState =
+    plain.status === 'cancelled' ? 'CANCELLED' :
+    plain.status === 'pending'   ? 'PENDING' :
+    plain.status === 'confirmed' && String(plain.date) < today ? 'COMPLETED' :
+    'CONFIRMED';
+  const canRate = derivedState === 'COMPLETED';
 
   // Verificar si ya calificó
   let alreadyRated = false;
@@ -51,7 +57,7 @@ const toDto = async (reservation, userId) => {
     creation_date: plain.createdAt,
     number_of_people: plain.people,
     totalPrice,
-    state: plain.status,
+    state: derivedState,
     travellerName: plain.user ? plain.user.name : null,
     travellerId: plain.userId,
     disponibilityId: plain.disponibilityId ?? null,

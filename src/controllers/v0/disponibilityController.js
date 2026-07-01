@@ -9,7 +9,7 @@ const toDto = (avail) => {
     hour: avail.hour,
     precio: avail.precio ?? null,
     total_quota: total,
-    disponibleQuota: Math.max(0, total - reserved),
+    disponible_quota: Math.max(0, total - reserved),
     activityId: avail.activityId,
     guideId: avail.guideId ?? null,
     date: avail.date,
