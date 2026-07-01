@@ -132,6 +132,10 @@ const create = async (req, res) => {
       disponibilityId: disponibilityId ?? null,
     });
 
+    // Generar voucherCode único después del insert (necesita el ID)
+    const voucherCode = 'VCH' + reservation.id.toString().padStart(6, '0');
+    await reservation.update({ voucherCode });
+
     const result = await Reservation.findByPk(reservation.id, {
       include: [activityInclude, { model: User, as: 'user', attributes: ['id', 'name'], required: false }],
     });
