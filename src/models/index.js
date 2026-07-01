@@ -10,6 +10,7 @@ const FavoriteDestination = require('./FavoriteDestination');
 const Review = require('./Review');
 const Image = require('./Image');
 const News = require('./News');
+const Notification = require('./Notification');
 
 // Activity associations
 Activity.belongsTo(Destination, { foreignKey: 'destinationId', as: 'destination' });
@@ -58,7 +59,11 @@ User.hasMany(FavoriteDestination, { foreignKey: 'userId', as: 'favoriteDestinati
 FavoriteDestination.belongsTo(Destination, { foreignKey: 'destinationId', as: 'destination' });
 Destination.hasMany(FavoriteDestination, { foreignKey: 'destinationId', as: 'favoriteDestinations' });
 
+// Notification associations
+Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
+
 module.exports = {
   User, OtpCode, Destination, TourGuide, Activity, Availability,
-  Reservation, Favorite, FavoriteDestination, Review, Image, News,
+  Reservation, Favorite, FavoriteDestination, Review, Image, News, Notification,
 };
