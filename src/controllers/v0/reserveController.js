@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Reservation, Activity, Destination, TourGuide, Review, Image, User } = require('../../models');
+const { Reservation, Activity, Destination, TourGuide, Review, Image, User, Notification } = require('../../models');
 
 const activityInclude = {
   model: Activity,
@@ -17,14 +17,20 @@ const toDto = async (reservation, userId) => {
   const activity = plain.activity || {};
   const dest = activity.destination || {};
   const guide = activity.guide || {};
-  const images = (activity.images || []).map(img => ({ id: img.id, url: img.url }));
+  const images = (activity.images || []).map(img => ({ id_image: img.id, url: img.url }));
   if (images.length === 0 && activity.imageUrl) {
-    images.push({ id: null, url: activity.imageUrl });
+    images.push({ id_image: null, url: activity.imageUrl });
   }
 
-  // Verificar si puede calificar (reserva pasada y confirmada)
+  // Derivar estado en uppercase para Android (que compara con "PENDING","CONFIRMED","CANCELLED","COMPLETED")
+  // COMPLETED = confirmed + fecha pasada (no existe en DB, se deriva)
   const today = new Date().toISOString().split('T')[0];
-  const canRate = plain.status === 'confirmed' && plain.date < today;
+  const derivedState =
+    plain.status === 'cancelled' ? 'CANCELLED' :
+    plain.status === 'pending'   ? 'PENDING' :
+    plain.status === 'confirmed' && String(plain.date) < today ? 'COMPLETED' :
+    'CONFIRMED';
+  const canRate = derivedState === 'COMPLETED';
 
   // Verificar si ya calificó
   let alreadyRated = false;
@@ -51,7 +57,7 @@ const toDto = async (reservation, userId) => {
     creation_date: plain.createdAt,
     number_of_people: plain.people,
     totalPrice,
-    state: plain.status,
+    state: derivedState,
     travellerName: plain.user ? plain.user.name : null,
     travellerId: plain.userId,
     disponibilityId: plain.disponibilityId ?? null,
@@ -93,11 +99,13 @@ const getHistory = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const { disponibility, numberOfPeople } = req.body;
-    const disponibilityId = disponibility?.idDisponibility ?? req.body.disponibilityId;
+    const { disponibility } = req.body;
+    // Android envía number_of_people (snake_case via @SerializedName); aceptar ambas formas
+    const people = req.body.number_of_people ?? req.body.numberOfPeople ?? req.body.people ?? 1;
+    // Android envía disponibility.id_disponibility (snake_case via @SerializedName); aceptar ambas formas
+    const disponibilityId = disponibility?.id_disponibility ?? disponibility?.idDisponibility ?? req.body.disponibilityId;
     const activityId = req.body.activityId ?? disponibility?.activityId;
     const date = req.body.reservationDate ?? req.body.date;
-    const people = numberOfPeople ?? req.body.people ?? 1;
 
     if (!activityId || !date) {
       return res.status(400).json({ message: 'activityId y date son requeridos' });
@@ -124,6 +132,15 @@ const create = async (req, res) => {
       disponibilityId: disponibilityId ?? null,
     });
 
+    // Crear notificación de reserva confirmada (async — no bloquea la respuesta)
+    Notification.create({
+      userId: req.user.id,
+      type: 'RESERVATION_CONFIRMED',
+      title: '¡Reserva confirmada!',
+      message: activity.name,
+      reserveId: reservation.id,
+    }).catch(e => console.error('Error creando notificación de reserva:', e));
+
     const result = await Reservation.findByPk(reservation.id, {
       include: [activityInclude, { model: User, as: 'user', attributes: ['id', 'name'], required: false }],
     });
@@ -139,12 +156,24 @@ const cancel = async (req, res) => {
   try {
     const reservation = await Reservation.findOne({
       where: { id: req.params.id, userId: req.user.id },
+      include: [{ model: Activity, as: 'activity', attributes: ['name'], required: false }],
     });
     if (!reservation) return res.status(404).json({ message: 'Reserva no encontrada' });
     if (reservation.status === 'cancelled') {
       return res.status(400).json({ message: 'La reserva ya está cancelada' });
     }
     await reservation.update({ status: 'cancelled' });
+
+    // Crear notificación de cancelación (async — no bloquea la respuesta)
+    const activityName = reservation.activity?.name ?? 'tu actividad';
+    Notification.create({
+      userId: req.user.id,
+      type: 'RESERVATION_CANCELLED',
+      title: 'Reserva cancelada',
+      message: activityName,
+      reserveId: reservation.id,
+    }).catch(e => console.error('Error creando notificación de cancelación:', e));
+
     res.json({ message: 'Reserva cancelada', idReserve: reservation.id });
   } catch (err) {
     console.error('Error cancelling reserve:', err);
