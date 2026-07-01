@@ -10,6 +10,9 @@ const Reservation = sequelize.define('Reservation', {
     defaultValue: 'pending',
   },
   totalPrice: { type: DataTypes.DECIMAL(10, 2) },
+  voucherCode: { type: DataTypes.STRING(20), unique: true, allowNull: true },
+  checkedIn: { type: DataTypes.BOOLEAN, defaultValue: false },
+  checkedInAt: { type: DataTypes.DATE, allowNull: true },
   // userId y activityId se agregan via asociaciones en models/index.js
 });
 
