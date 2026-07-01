@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Reservation, Activity, Destination, TourGuide, Review, Image, User } = require('../../models');
+const { Reservation, Activity, Destination, TourGuide, Review, Image, User, Notification } = require('../../models');
 
 const activityInclude = {
   model: Activity,
@@ -132,9 +132,14 @@ const create = async (req, res) => {
       disponibilityId: disponibilityId ?? null,
     });
 
-    // Generar voucherCode único después del insert (necesita el ID)
-    const voucherCode = 'VCH' + reservation.id.toString().padStart(6, '0');
-    await reservation.update({ voucherCode });
+    // Crear notificación de reserva confirmada (async — no bloquea la respuesta)
+    Notification.create({
+      userId: req.user.id,
+      type: 'RESERVATION_CONFIRMED',
+      title: '¡Reserva confirmada!',
+      message: activity.name,
+      reserveId: reservation.id,
+    }).catch(e => console.error('Error creando notificación de reserva:', e));
 
     const result = await Reservation.findByPk(reservation.id, {
       include: [activityInclude, { model: User, as: 'user', attributes: ['id', 'name'], required: false }],
@@ -151,12 +156,24 @@ const cancel = async (req, res) => {
   try {
     const reservation = await Reservation.findOne({
       where: { id: req.params.id, userId: req.user.id },
+      include: [{ model: Activity, as: 'activity', attributes: ['name'], required: false }],
     });
     if (!reservation) return res.status(404).json({ message: 'Reserva no encontrada' });
     if (reservation.status === 'cancelled') {
       return res.status(400).json({ message: 'La reserva ya está cancelada' });
     }
     await reservation.update({ status: 'cancelled' });
+
+    // Crear notificación de cancelación (async — no bloquea la respuesta)
+    const activityName = reservation.activity?.name ?? 'tu actividad';
+    Notification.create({
+      userId: req.user.id,
+      type: 'RESERVATION_CANCELLED',
+      title: 'Reserva cancelada',
+      message: activityName,
+      reserveId: reservation.id,
+    }).catch(e => console.error('Error creando notificación de cancelación:', e));
+
     res.json({ message: 'Reserva cancelada', idReserve: reservation.id });
   } catch (err) {
     console.error('Error cancelling reserve:', err);

@@ -11,5 +11,6 @@ router.use('/reserves', require('./reserves'));
 router.use('/travellers', require('./travellers'));
 router.use('/ubications', require('./ubications'));
 router.use('/reviews', require('./reviews'));
+router.use('/notifications', require('./notifications'));
 
 module.exports = router;
