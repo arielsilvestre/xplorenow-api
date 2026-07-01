@@ -1,9 +1,20 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
+// Lazy init: no instanciar Resend al importar el módulo para no crashear
+// el server si RESEND_API_KEY no está configurada en las env vars.
+const getResend = () => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[emailService] RESEND_API_KEY no configurada — emails desactivados');
+    return null;
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+};
+
 const sendVerificationEmail = async (toEmail, code) => {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: toEmail,
@@ -20,6 +31,8 @@ const sendVerificationEmail = async (toEmail, code) => {
 };
 
 const sendPasswordResetEmail = async (toEmail, code) => {
+  const resend = getResend();
+  if (!resend) return;
   await resend.emails.send({
     from: FROM,
     to: toEmail,
